@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Farm AI Agent - Crop Recommendation System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Light theme colors */
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --bg-tertiary: #f1f5f9;
+            --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --text-muted: #94a3b8;
+            --border-color: #e2e8f0;
+            --border-focus: #667eea;
+            --accent-primary: #667eea;
+            --accent-secondary: #764ba2;
+            --success-bg: #dcfce7;
+            --success-text: #166534;
+            --error-bg: #fef2f2;
+            --error-text: #dc2626;
+            --warning-bg: #fef3c7;
+            --warning-text: #d97706;
+            --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --card-shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        [data-theme="dark"] {
+            /* Dark theme colors */
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-tertiary: #334155;
+            --bg-gradient: linear-gradient(135deg, #4338ca 0%, #7c3aed 100%);
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+            --border-focus: #6366f1;
+            --accent-primary: #6366f1;
+            --accent-secondary: #8b5cf6;
+            --success-bg: #064e3b;
+            --success-text: #6ee7b7;
+            --error-bg: #7f1d1d;
+            --error-text: #fca5a5;
+            --warning-bg: #78350f;
+            --warning-text: #fbbf24;
+            --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+            --card-shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: var(--text-primary);
+            background: var(--bg-gradient);
+            min-height: 100vh;
+            transition: all 0.3s ease;
+        }
+
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: var(--bg-primary);
+            border: 2px solid var(--border-color);
+            border-radius: 50px;
+            padding: 8px 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-primary);
+            box-shadow: var(--card-shadow);
+            transition: all 0.3s ease;
+        }
+
+        .theme-toggle:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--card-shadow-hover);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            color: white;
+            padding: 40px 20px;
+        }
+
+        .header h1 {
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            margin-bottom: 16px;
+            font-weight: 700;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            letter-spacing: -0.02em;
+        }
+
+        .header p {
+            font-size: clamp(1rem, 2.5vw, 1.3rem);
+            opacity: 0.95;
+            font-weight: 400;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .sdg-banner {
+            background: linear-gradient(135deg, #e6771e 0%, #f7941d 100%);
+            color: white;
+            text-align: center;
+            padding: 24px;
+            border-radius: 16px;
+            margin-bottom: 32px;
+            box-shadow: var(--card-shadow);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .sdg-banner::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%);
+            animation: shimmer 3s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .sdg-banner h3 {
+            margin-bottom: 8px;
+            font-size: 1.4rem;
+            font-weight: 600;
+        }
+
+        .sdg-banner p {
+            font-size: 1rem;
+            opacity: 0.95;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 32px;
+            align-items: start;
+        }
+
+        .form-container, .results-container {
+            background: var(--bg-primary);
+            border-radius: 20px;
+            padding: 32px;
+            box-shadow: var(--card-shadow);
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .form-container::before, .results-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--bg-gradient);
+        }
+
+        .form-container:hover, .results-container:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--card-shadow-hover);
+        }
+
+        .results-container {
+            min-height: 500px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .results-container h2 {
+            color: var(--text-primary);
+            margin-bottom: 24px;
+            font-size: 1.8rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .form-section {
+            margin-bottom: 32px;
+            padding: 24px;
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        .form-section:hover {
+            background: var(--bg-tertiary);
+            transform: translateY(-2px);
+        }
+
+        .form-section h3 {
+            color: var(--text-primary);
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--accent-primary);
+            font-size: 1.3rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--text-primary);
+            font-size: 0.95rem;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            font-size: 16px;
+            font-family: inherit;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--border-focus);
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .form-group input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .submit-btn {
+            width: 100%;
+            background: var(--bg-gradient);
+            color: white;
+            padding: 16px 24px;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            margin-top: 24px;
+        }
+
+        .submit-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .submit-btn:hover::before {
+            left: 100%;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .submit-btn:disabled:hover {
+            transform: none;
+            box-shadow: none;
+        }
+
+        .loading {
+            display: flex;
+            text-align: center;
+            padding: 40px 20px;
+            flex: 1;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .loading.hidden {
+            display: none;
+        }
+
+        .spinner {
+            border: 4px solid var(--border-color);
+            border-top: 4px solid var(--accent-primary);
+            border-radius: 50%;
+            width: 48px;
+            height: 48px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        .loading p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .results {
+            display: none;
+            flex: 1;
+        }
+
+        .results.show {
+            display: block;
+        }
+
+        .result-section {
+            margin-bottom: 28px;
+            padding: 24px;
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        .result-section:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--card-shadow-hover);
+        }
+
+        .result-section h4 {
+            color: var(--text-primary);
+            margin-bottom: 20px;
+            font-size: 1.3rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .crop-card {
+            background: var(--bg-primary);
+            padding: 20px;
+            margin-bottom: 16px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        .crop-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--card-shadow);
+        }
+
+        .crop-card:last-child {
+            margin-bottom: 0;
+        }
+
+        .crop-card h5 {
+            color: var(--text-primary);
+            margin-bottom: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .crop-card p {
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+
+        .crop-card p:last-child {
+            margin-bottom: 0;
+        }
+
+        .score {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 12px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .error {
+            background: var(--error-bg);
+            color: var(--error-text);
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 20px;
+            border: 1px solid currentColor;
+            font-weight: 500;
+        }
+
+        .success {
+            background: var(--success-bg);
+            color: var(--success-text);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            border: 1px solid currentColor;
+            font-weight: 500;
+        }
+
+        #initial-message {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        #initial-message p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            max-width: 400px;
+            line-height: 1.6;
+        }
+
+        .result-section ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .result-section ul li {
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            position: relative;
+            padding-left: 24px;
+        }
+
+        .result-section ul li:last-child {
+            border-bottom: none;
+        }
+
+        .result-section ul li::before {
+            content: '•';
+            color: var(--accent-primary);
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+            top: 12px;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .main-content {
+                gap: 24px;
+            }
+            
+            .form-container, .results-container {
+                padding: 24px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .container {
+                padding: 16px;
+            }
+            
+            .header {
+                padding: 32px 16px;
+                margin-bottom: 32px;
+            }
+            
+            .form-container, .results-container {
+                padding: 20px;
+                border-radius: 16px;
+            }
+            
+            .form-section {
+                padding: 20px;
+                margin-bottom: 24px;
+            }
+            
+            .theme-toggle {
+                top: 16px;
+                right: 16px;
+                padding: 6px 12px;
+                font-size: 13px;
+            }
+            
+            .sdg-banner {
+                padding: 20px;
+                margin-bottom: 24px;
+            }
+            
+            .crop-card h5 {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .form-group input,
+            .form-group select {
+                padding: 12px 14px;
+                font-size: 16px; /* Prevents zoom on iOS */
+            }
+            
+            .submit-btn {
+                padding: 14px 20px;
+                font-size: 16px;
+            }
+            
+            .form-section h3 {
+                font-size: 1.2rem;
+            }
+            
+            .result-section h4 {
+                font-size: 1.2rem;
+            }
+        }
+
+        /* Accessibility improvements */
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        /* Focus styles for better accessibility */
+        .theme-toggle:focus-visible {
+            outline: 2px solid var(--accent-primary);
+            outline-offset: 2px;
+        }
+
+        .submit-btn:focus-visible {
+            outline: 2px solid white;
+            outline-offset: 2px;
+        }
+
+        /* High contrast mode support */
+        @media (prefers-contrast: high) {
+            :root {
+                --border-color: #000000;
+                --text-muted: #000000;
+            }
+            
+            [data-theme="dark"] {
+                --border-color: #ffffff;
+                --text-muted: #ffffff;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="theme-toggle" onclick="toggleTheme()" role="button" tabindex="0" aria-label="Toggle dark mode">
+        <span id="theme-icon">🌙</span>
+        <span id="theme-text">Dark</span>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <h1>🌱 Farm AI Agent</h1>
+            <p>AI-Powered Crop Recommendation System for Sustainable Agriculture</p>
+        </div>
+
+        <div class="sdg-banner">
+            <h3>🎯 Supporting UN SDG 2: Zero Hunger</h3>
+            <p>Helping farmers make informed decisions for better crop yields and food security</p>
+        </div>
+
+        <div class="main-content">
+            <!-- Input Form -->
+            <div class="form-container">
+                <form id="farmingForm">
+                    <!-- Soil Data Section -->
+                    <div class="form-section">
+                        <h3>🌍 Soil Data</h3>
+                        <div class="form-group">
+                            <label for="soil_type">Soil Type:</label>
+                            <select id="soil_type" name="soil_type" required>
+                                <option value="">Select soil type</option>
+                                <option value="clay">Clay</option>
+                                <option value="sandy">Sandy</option>
+                                <option value="loamy">Loamy</option>
+                                <option value="silty">Silty</option>
+                                <option value="peaty">Peaty</option>
+                                <option value="chalky">Chalky</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="ph_level">pH Level (0-14):</label>
+                            <input type="number" id="ph_level" name="ph_level" min="0" max="14" step="0.1" placeholder="e.g., 6.5">
+                        </div>
+                        <div class="form-group">
+                            <label for="nitrogen">Nitrogen Content (ppm):</label>
+                            <input type="number" id="nitrogen" name="nitrogen" min="0" placeholder="e.g., 200">
+                        </div>
+                        <div class="form-group">
+                            <label for="phosphorus">Phosphorus Content (ppm):</label>
+                            <input type="number" id="phosphorus" name="phosphorus" min="0" placeholder="e.g., 50">
+                        </div>
+                        <div class="form-group">
+                            <label for="potassium">Potassium Content (ppm):</label>
+                            <input type="number" id="potassium" name="potassium" min="0" placeholder="e.g., 150">
+                        </div>
+                        <div class="form-group">
+                            <label for="organic_matter">Organic Matter (%):</label>
+                            <input type="number" id="organic_matter" name="organic_matter" min="0" max="100" step="0.1" placeholder="e.g., 3.5">
+                        </div>
+                        <div class="form-group">
+                            <label for="moisture">Moisture Content (%):</label>
+                            <input type="number" id="moisture" name="moisture" min="0" max="100" step="0.1" placeholder="e.g., 25">
+                        </div>
+                    </div>
+
+                    <!-- Weather Data Section -->
+                    <div class="form-section">
+                        <h3>🌤️ Weather Data</h3>
+                        <div class="form-group">
+                            <label for="avg_temperature">Average Temperature (°C):</label>
+                            <input type="number" id="avg_temperature" name="avg_temperature" step="0.1" placeholder="e.g., 25.5">
+                        </div>
+                        <div class="form-group">
+                            <label for="humidity">Humidity (%):</label>
+                            <input type="number" id="humidity" name="humidity" min="0" max="100" step="0.1" placeholder="e.g., 65">
+                        </div>
+                        <div class="form-group">
+                            <label for="rainfall">Annual Rainfall (mm):</label>
+                            <input type="number" id="rainfall" name="rainfall" min="0" placeholder="e.g., 1200">
+                        </div>
+                        <div class="form-group">
+                            <label for="season">Current Season:</label>
+                            <select id="season" name="season">
+                                <option value="">Select season</option>
+                                <option value="spring">Spring</option>
+                                <option value="summer">Summer</option>
+                                <option value="monsoon">Monsoon</option>
+                                <option value="autumn">Autumn</option>
+                                <option value="winter">Winter</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="sunlight_hours">Sunlight Hours/Day:</label>
+                            <input type="number" id="sunlight_hours" name="sunlight_hours" min="0" max="24" step="0.1" placeholder="e.g., 8.5">
+                        </div>
+                    </div>
+
+                    <!-- Location Data Section -->
+                    <div class="form-section">
+                        <h3>📍 Location Data</h3>
+                        <div class="form-group">
+                            <label for="region">Region/State:</label>
+                            <input type="text" id="region" name="region" placeholder="e.g., Maharashtra, India">
+                        </div>
+                        <div class="form-group">
+                            <label for="climate_zone">Climate Zone:</label>
+                            <select id="climate_zone" name="climate_zone">
+                                <option value="">Select climate zone</option>
+                                <option value="tropical">Tropical</option>
+                                <option value="subtropical">Subtropical</option>
+                                <option value="temperate">Temperate</option>
+                                <option value="arid">Arid</option>
+                                <option value="semiarid">Semi-arid</option>
+                                <option value="mediterranean">Mediterranean</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="altitude">Altitude (meters):</label>
+                            <input type="number" id="altitude" name="altitude" min="0" placeholder="e.g., 500">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="submit-btn" id="submitBtn">
+                        🔍 Get AI Recommendations
+                    </button>
+                </form>
+            </div>
+
+            <!-- Results Display -->
+            <div class="results-container">
+                <h2>📊 AI Recommendations</h2>
+                
+                <div class="loading hidden" id="loading">
+                    <div class="spinner"></div>
+                    <p>AI is analyzing your farming data...</p>
+                </div>
+
+                <div class="results" id="results">
+                    <!-- Results will be populated by JavaScript -->
+                </div>
+
+                <div id="initial-message">
+                    <p>🌱 Fill in your soil and weather data to get personalized crop recommendations from our AI agent.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Theme management
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            
+            updateThemeToggle(newTheme);
+        }
+
+        function updateThemeToggle(theme) {
+            const themeIcon = document.getElementById('theme-icon');
+            const themeText = document.getElementById('theme-text');
+            
+            if (theme === 'dark') {
+                themeIcon.textContent = '☀️';
+                themeText.textContent = 'Light';
+            } else {
+                themeIcon.textContent = '🌙';
+                themeText.textContent = 'Dark';
+            }
+        }
+
+        // Initialize theme
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const theme = savedTheme || (prefersDark ? 'dark' : 'light');
+            
+            document.documentElement.setAttribute('data-theme', theme);
+            updateThemeToggle(theme);
+        }
+
+        // Listen for system theme changes
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+            if (!localStorage.getItem('theme')) {
+                const theme = e.matches ? 'dark' : 'light';
+                document.documentElement.setAttribute('data-theme', theme);
+                updateThemeToggle(theme);
+            }
+        });
+
+        // Keyboard support for theme toggle
+        document.querySelector('.theme-toggle').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                toggleTheme();
+            }
+        });
+
+        // Initialize theme on page load
+        initTheme();
+
+        // Form submission logic (unchanged)
+        document.getElementById('farmingForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const loading = document.getElementById('loading');
+            const results = document.getElementById('results');
+            const initialMessage = document.getElementById('initial-message');
+            
+            // Show loading state
+            submitBtn.disabled = true;
+            loading.classList.remove('hidden');
+            results.classList.remove('show');
+            initialMessage.style.display = 'none';
+            
+            // Collect form data
+            const formData = new FormData(e.target);
+            const data = {
+                soil_data: {
+                    soil_type: formData.get('soil_type'),
+                    ph_level: formData.get('ph_level'),
+                    nitrogen: formData.get('nitrogen'),
+                    phosphorus: formData.get('phosphorus'),
+                    potassium: formData.get('potassium'),
+                    organic_matter: formData.get('organic_matter'),
+                    moisture: formData.get('moisture')
+                },
+                weather_data: {
+                    avg_temperature: formData.get('avg_temperature'),
+                    humidity: formData.get('humidity'),
+                    rainfall: formData.get('rainfall'),
+                    season: formData.get('season'),
+                    sunlight_hours: formData.get('sunlight_hours')
+                },
+                location_data: {
+                    region: formData.get('region'),
+                    climate_zone: formData.get('climate_zone'),
+                    altitude: formData.get('altitude')
+                }
+            };
+            
+            try {
+                const response = await fetch('/api/analyze', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                // Hide loading
+                loading.classList.add('hidden');
+                submitBtn.disabled = false;
+                
+                if (result.success) {
+                    displayResults(result.recommendations);
+                } else {
+                    displayError(result.error || 'An error occurred while processing your request.');
+                }
+                
+            } catch (error) {
+                loading.classList.add('hidden');
+                submitBtn.disabled = false;
+                displayError('Network error: ' + error.message);
+            }
+        });
+        
+        function displayResults(recommendations) {
+            const results = document.getElementById('results');
+            let html = '<div class="success">✅ AI Analysis Complete!</div>';
+            
+            // Recommended Crops
+            if (recommendations.recommended_crops) {
+                html += '<div class="result-section">';
+                html += '<h4>🌾 Recommended Crops</h4>';
+                recommendations.recommended_crops.forEach(crop => {
+                    html += `
+                        <div class="crop-card">
+                            <h5>${crop.crop_name} <span class="score">Score: ${crop.suitability_score}/10</span></h5>
+                            <p><strong>Expected Yield:</strong> ${crop.expected_yield}</p>
+                            <p><strong>Growing Season:</strong> ${crop.growing_season}</p>
+                            <p><strong>Reasons:</strong> ${crop.reasons ? crop.reasons.join(', ') : 'N/A'}</p>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+            }
+            
+            // Fertilizer Recommendations
+            if (recommendations.fertilizer_recommendations) {
+                html += '<div class="result-section">';
+                html += '<h4>🧪 Fertilizer Recommendations</h4>';
+                recommendations.fertilizer_recommendations.forEach(fertilizer => {
+                    html += `
+                        <div class="crop-card">
+                            <h5>${fertilizer.fertilizer_type}</h5>
+                            <p><strong>Application Rate:</strong> ${fertilizer.application_rate}</p>
+                            <p><strong>Timing:</strong> ${fertilizer.timing}</p>
+                            <p><strong>Purpose:</strong> ${fertilizer.purpose}</p>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+            }
+            
+            // Pesticide Recommendations
+            if (recommendations.pesticide_recommendations) {
+                html += '<div class="result-section">';
+                html += '<h4>🛡️ Pesticide Recommendations</h4>';
+                recommendations.pesticide_recommendations.forEach(pesticide => {
+                    html += `
+                        <div class="crop-card">
+                            <h5>${pesticide.pesticide_type}</h5>
+                            <p><strong>Target Pests:</strong> ${pesticide.target_pests ? pesticide.target_pests.join(', ') : 'N/A'}</p>
+                            <p><strong>Application:</strong> ${pesticide.application_method}</p>
+                            <p><strong>Safety:</strong> ${pesticide.safety_notes}</p>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+            }
+            
+            // Soil Improvement
+            if (recommendations.soil_improvement_suggestions) {
+                html += '<div class="result-section">';
+                html += '<h4>🌱 Soil Improvement Suggestions</h4>';
+                html += '<ul>';
+                recommendations.soil_improvement_suggestions.forEach(suggestion => {
+                    html += `<li>${suggestion}</li>`;
+                });
+                html += '</ul></div>';
+            }
+            
+            // General Advice
+            if (recommendations.general_advice) {
+                html += '<div class="result-section">';
+                html += '<h4>💡 General Advice</h4>';
+                html += `<p>${recommendations.general_advice}</p>`;
+                html += '</div>';
+            }
+            
+            // Sustainability Tips
+            if (recommendations.sustainability_tips) {
+                html += '<div class="result-section">';
+                html += '<h4>♻️ Sustainability Tips</h4>';
+                html += '<ul>';
+                recommendations.sustainability_tips.forEach(tip => {
+                    html += `<li>${tip}</li>`;
+                });
+                html += '</ul></div>';
+            }
+            
+            // Raw response fallback
+            if (recommendations.raw_response) {
+                html += '<div class="result-section">';
+                html += '<h4>📝 AI Response</h4>';
+                html += `<p>${recommendations.raw_response}</p>`;
+                html += '</div>';
+            }
+            
+            results.innerHTML = html;
+            results.classList.add('show');
+        }
+        
+        function displayError(error) {
+            const results = document.getElementById('results');
+            results.innerHTML = `<div class="error">❌ Error: ${error}</div>`;
+            results.classList.add('show');
+        }
+    </script>
+</body>
+</html>
