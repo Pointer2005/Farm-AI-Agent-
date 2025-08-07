@@ -166,9 +166,4 @@ POST /api/analyze
 
 This project is licensed under the MIT License – feel free to use and modify.
 
-git init
-git add .
-git commit -m "first commit"
-git branch -M main
-git remote add origin https://github.com/Pointer2005/Farm-AI-Agent-.git
-git push -u origin main
+
